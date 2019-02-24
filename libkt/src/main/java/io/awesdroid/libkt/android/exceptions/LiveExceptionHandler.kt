@@ -12,6 +12,8 @@ class LiveExceptionHandler {
     val handler = CoroutineExceptionHandler { _, exception ->
         if (exception is LiveException) {
             error.postValue(exception)
+        } else {
+            error.postValue(LiveException(LiveException.Type.ERROR_GENERAL, exception))
         }
     }
 

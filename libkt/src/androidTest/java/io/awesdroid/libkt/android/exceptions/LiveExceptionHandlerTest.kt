@@ -24,23 +24,45 @@ class LiveExceptionHandlerTest {
     }
 
     @Test
-    fun handlers() = runBlocking<Unit> {
-        val handler1 = LiveExceptionHandler()
-        val handler2 = LiveExceptionHandler()
+    fun handleLiveException() = runBlocking {
         val exception1 = LiveException(LiveException.Type.ERROR_NETWORK, Throwable("Network Error"))
         val exception2 =  LiveException(LiveException.Type.ERROR_GENERAL, Throwable("General Error"))
+
+        handleException(exception1, exception2)
+    }
+
+    @Test
+    fun handleNonLiveException() = runBlocking {
+        val exception1 = Throwable("Network Error")
+        val exception2 =  Throwable("General Error")
+
+        handleException(exception1, exception2)
+    }
+
+    private suspend fun handleException(
+        exception1: Throwable,
+        exception2: Throwable
+    ) {
+        val handler1 = LiveExceptionHandler()
+        val handler2 = LiveExceptionHandler()
         val random1 = Random.nextLong(0, 1000)
         val random2 = Random.nextLong(0, 1000)
 
         withContext(Dispatchers.Main) {
             handler1.getError().observe(lifeCycleOwner, Observer {
                 Assert.assertTrue(it != null)
-                Assert.assertEquals(it, exception1)
+                if (exception1 is LiveException)
+                    Assert.assertEquals(it, exception1)
+                else
+                    Assert.assertEquals(it.exception, exception1)
             })
 
             handler2.getError().observe(lifeCycleOwner, Observer {
                 Assert.assertTrue(it != null)
-                Assert.assertEquals(it, exception2)
+                if (exception2 is LiveException)
+                    Assert.assertEquals(it, exception2)
+                else
+                    Assert.assertEquals(it.exception, exception2)
             })
         }
 
